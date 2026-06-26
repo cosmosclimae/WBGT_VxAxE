@@ -1,0 +1,50 @@
+# ============================================================================
+# config.yaml — A x E x V workflow  (WSL: C:->/mnt/c, Z:->/mnt/z, F:->/mnt/f)
+# ============================================================================
+
+outdir: "/mnt/f/climae/WBGT-VAE"
+
+# --- hazard NetCDF (one file per ssp x horizon; contains ALL the day-count vars) ---
+wbgt_paths:
+  ssp126__2055: "/mnt/c/Data/WBGT/ENSEMBLE_AxExV/WBGT_mon_ssp126_2041-2070_ensmean.nc"
+  ssp245__2055: "/mnt/c/Data/WBGT/ENSEMBLE_AxExV/WBGT_mon_ssp245_2041-2070_ensmean.nc"
+  ssp126__2085: "/mnt/c/Data/WBGT/ENSEMBLE_AxExV/WBGT_mon_ssp126_2071-2100_ensmean.nc"
+  ssp245__2085: "/mnt/c/Data/WBGT/ENSEMBLE_AxExV/WBGT_mon_ssp245_2071-2100_ensmean.nc"
+
+# *** WBGT-LEVEL SWEEP ***
+# Each level -> LIST of monthly day-count variables to SUM, then A = sum(360)/30.
+#   - CUMULATIVE counts (ge28/ge30/ge32): one var each.
+#   - BINNED classes from your CDO (nd_aft_c4=[28,30), c5=[30,32), c6=[32,inf)):
+#     sum the classes  (>=28 = c4+c5+c6 ; >=30 = c5+c6 ; >=32 = c6).
+# CHECK first:  cdo showname /mnt/c/Data/WBGT/ENSEMBLE_Foot/WBGT_mon_ssp126_2041-2070_ensmean.nc
+hazard_levels:
+  28: ["ndays_wbgt_aft_28_30", "ndays_wbgt_aft_30_32", "ndays_wbgt_aft_ge32"]   # >=28
+  30: ["ndays_wbgt_aft_30_32", "ndays_wbgt_aft_ge32"]                            # >=30
+  32: ["ndays_wbgt_aft_ge32"]                                                    # >=32
+headline_level: 32                       # level used for maps / double dividend / tau sweep
+
+n_years: 30
+wbgt_lon_0_360: true
+
+# --- population GeoTIFF (counts, 1 km, -180..180) ---  ADJUST suffix if needed
+pop_template: "/mnt/z/DATA_SOC/Pixel/WorldPop/FuturePop_{SSP}/FuturePop_{SSP}_{YEAR}_1km_v0_2.tif"
+
+# --- GVI national table ---
+gvi_csv: "/mnt/z/DATA_SOC/GVIP Database 1/GVIP Database 1.csv"
+gvi_iso: "iso_code"
+gvi_year: "year"
+gvi_ssp: "ssp"
+gvi_val: "pgvi"
+
+# --- borders (Natural Earth 10m). ADM0_A3 (ISO_A3 has -99 for FRA/NOR/...) ---
+borders_shp: "/mnt/z/DATA_SOC/ne_10m_admin_0_countries/ne_10m_admin_0_countries.shp"
+borders_iso_field: "ADM0_A3"
+
+# --- experiment matrix ---
+scenarios:                  # hazard ssp -> [pop SSP label, GVI ssp code]
+  ssp126: ["SSP1", 1]
+  ssp245: ["SSP2", 2]
+horizons: [2055, 2085]
+taus: [15, 30, 45]          # persistence (days/yr) for the unsafe-regime headcount
+headline_tau: 30
+dd_horizon: 2085            # horizon for the double-dividend figure
